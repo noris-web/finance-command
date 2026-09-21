@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Finance Command - Personal Finance Tracker</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#111827',
+                            900: '#0f172a',
+                            950: '#020617'
+                        },
+                        brand: {
+                            teal: '#0d9488',
+                            emerald: '#10b981',
+                            ruby: '#f43f5e',
+                            amber: '#f59e0b',
+                            blue: '#3b82f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .nav-item-active {
+            color: #0d9488;
+        }
+
+        .nav-item-active .icon-box {
+            background-color: rgba(13, 148, 136, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .card-blur {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-header {
+            background: rgba(2, 6, 23, 0.88);
+            backdrop-filter: blur(16px);
+        }
+
+        select, input {
+            color-scheme: dark;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen pb-24 select-none">
+
+    <header class="sticky top-0 z-40 glass-header border-b border-slate-800/80 px-4 py-3 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 via-teal-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-teal-500/20">
+                <i data-lucide="wallet" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-base tracking-tight leading-none text-white">Finance Command</h1>
+                <p class="text-[11px] text-teal-400 font-semibold mt-0.5 tracking-wide">LKR Personal Tracker</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="downloadSelfAppFile()" class="px-3 py-1.5 rounded-xl bg-teal-600/20 text-teal-300 border border-teal-500/40 font-bold text-xs hover:bg-teal-600 hover:text-white transition-all flex items-center space-x-1.5 shadow-lg shadow-teal-900/30">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Save App File</span>
+                <span class="sm:hidden">Save File</span>
+            </button>
+            <button onclick="exportDataToCSV()" class="p-2 rounded-xl text-slate-400 hover:text-teal-400 hover:bg-slate-800 transition-colors" title="Export CSV Data">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-md w-full mx-auto px-4 pt-4 space-y-5">
+
+        <!-- ================= 1. DASHBOARD VIEW ================= -->
+        <section id="tab-dashboard" class="space-y-4">
+            
+            <!-- Instructions Banner for Mobile Transfer -->
+            <div class="p-3.5 rounded-2xl bg-teal-950/40 border border-teal-500/30 flex items-start space-x-3 shadow-lg">
+                <div class="p-2 rounded-xl bg-teal-500/20 text-teal-400 shrink-0">
+                    <i data-lucide="smartphone" class="w-4 h-4"></i>
+                </div>
+                <div class="text-xs text-slate-300 space-y-1">
+                    <p class="font-bold text-white">Want this on your mobile phone?</p>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        Tap <strong class="text-teal-300">"Save File"</strong> above, send the downloaded HTML file to your phone via WhatsApp/Email, and open it directly in Safari/Chrome! No internet required.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Net Balance Hero Card -->
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-8 -bottom-8 w-36 h-36 bg-teal-500/10 rounded-full blur-3xl"></div>
+                <div class="flex justify-between items-center mb-1">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Net Cash Balance</p>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 font-bold">LKR Active</span>
+                </div>
+                
+                <div class="flex items-baseline space-x-1.5 my-2">
+                    <span class="text-xs font-extrabold text-teal-400">LKR</span>
+                    <h2 id="kpi-balance" class="text-3xl font-extrabold text-white tracking-tight">0.00</h2>
+                </div>
+
+                <!-- Income vs Expense Grid -->
+                <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-800/80">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-medium text-slate-400 uppercase">Total Income</p>
+                            <p id="kpi-income" class="text-xs font-extrabold text-emerald-400">LKR 0.00</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-medium text-slate-400 uppercase">Total Expense</p>
+                            <p id="kpi-expense" class="text-xs font-extrabold text-rose-400">LKR 0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Net Receivables Card -->
+            <div class="p-4 rounded-xl card-blur flex items-center justify-between border border-slate-800/80 shadow-lg">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <i data-lucide="hand-coins" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-200">Net Money Receivable</p>
+                        <p class="text-[10px] text-slate-400">Money Given minus Received</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p id="kpi-receivable" class="text-sm font-extrabold text-amber-400">LKR 0.00</p>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="switchTab('add')" class="flex-1 py-3.5 px-4 bg-teal-600 hover:bg-teal-500 active:scale-95 transition-all rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 text-white shadow-xl shadow-teal-600/25">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>Log Transaction</span>
+                </button>
+                <button onclick="switchTab('transactions')" class="py-3.5 px-4 bg-slate-850 hover:bg-slate-800 border border-slate-800 active:scale-95 transition-all rounded-xl font-bold text-xs text-slate-300 flex items-center justify-center space-x-1.5">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                    <span class="text-xs font-bold">History</span>
+                </button>
+            </div>
+
+            <!-- Recent Transactions List -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between px-1">
+                    <h3 class="text-xs font-extrabold text-slate-300 uppercase tracking-wider">Recent Transactions</h3>
+                    <button onclick="switchTab('transactions')" class="text-xs font-bold text-teal-400 hover:underline">View All</button>
+                </div>
+                <div id="recent-transactions-list" class="space-y-2.5">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 2. LOG TRANSACTION VIEW ================= -->
+        <section id="tab-add" class="hidden space-y-4">
+            <div class="card-blur p-5 rounded-2xl space-y-4 border border-slate-800 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-teal-400"></i>
+                        <h2 class="text-base font-bold text-white">Log New Transaction</h2>
+                    </div>
+                    <span id="auto-day-badge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-teal-400 border border-slate-700">Monday</span>
+                </div>
+
+                <form id="transaction-form" class="space-y-3.5" onsubmit="handleFormSubmit(event)">
+                    
+                    <!-- Type Selector Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Transaction Type</label>
+                        <select id="input-type" onchange="updateCategoryAndDescriptionDropdowns()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm font-bold text-white focus:outline-none focus:border-teal-500 transition-colors">
+                            <option value="Expense">Expense</option>
+                            <option value="Income">Income</option>
+                            <option value="Money Given">Money Given (Lent / Receivable)</option>
+                            <option value="Money Received">Money Received (Repayment)</option>
+                        </select>
+                    </div>
+
+                    <!-- Category Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Category</label>
+                        <select id="input-category" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Description Dropdown / Custom Entry -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Description / Quick Note</label>
+                        <select id="input-description" onchange="checkCustomDescription(this)" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <input type="text" id="input-custom-description" placeholder="Type custom description..." class="w-full mt-2 bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors hidden">
+                    </div>
+
+                    <!-- Amount & Date Grid -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Amount (LKR)</label>
+                            <input type="number" step="0.01" id="input-amount" placeholder="0.00" required class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors font-extrabold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Date</label>
+                            <input type="date" id="input-date" onchange="updateDayNameBadge()" required class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Person Dropdown / Input -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Person / Reference</label>
+                        <select id="input-person" onchange="checkCustomPerson(this)" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors">
+                            <option value="Self">Self</option>
+                            <option value="Employer">Employer</option>
+                            <option value="Family">Family</option>
+                            <option value="Friend">Friend</option>
+                            <option value="Landlord">Landlord</option>
+                            <option value="Utility Board">Utility Board</option>
+                            <option value="CUSTOM">+ Type New Person Name</option>
+                        </select>
+                        <input type="text" id="input-custom-person" placeholder="Type person / entity name..." class="w-full mt-2 bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors hidden">
+                    </div>
+
+                    <!-- Payment Method Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Payment Method</label>
+                        <select id="input-payment" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors">
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Debit Card">Debit Card</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Online Payment">Online Payment</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full mt-3 py-3.5 px-4 bg-teal-600 hover:bg-teal-500 active:scale-95 transition-all rounded-xl font-bold text-xs uppercase tracking-wider text-white shadow-xl shadow-teal-600/30 flex items-center justify-center space-x-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span>Save Transaction</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= 3. TRANSACTION HISTORY VIEW ================= -->
+        <section id="tab-transactions" class="hidden space-y-4">
+            <div class="card-blur p-3.5 rounded-xl space-y-3 border border-slate-800">
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                    <input type="text" id="search-input" onkeyup="renderTransactionsList()" placeholder="Search description, category, person..." class="w-full bg-slate-900 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500">
+                </div>
+                <div class="flex gap-2">
+                    <select id="filter-type" onchange="renderTransactionsList()" class="w-full bg-slate-900 border border-slate-700/80 rounded-lg p-2 text-xs text-slate-300 focus:outline-none">
+                        <option value="ALL">All Types</option>
+                        <option value="Income">Income</option>
+                        <option value="Expense">Expense</option>
+                        <option value="Money Given">Money Given</option>
+                        <option value="Money Received">Money Received</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Transaction Stack -->
+            <div id="all-transactions-list" class="space-y-2.5">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ================= 4. ANALYTICS VIEW ================= -->
+        <section id="tab-analytics" class="hidden space-y-4">
+            <!-- Doughnut Chart Card -->
+            <div class="card-blur p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-teal-400"></i>
+                        <h2 class="text-base font-bold text-white">Expense Distribution</h2>
+                    </div>
+                </div>
+
+                <div class="h-60 relative w-full flex items-center justify-center">
+                    <canvas id="categoryDoughnutChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Category Breakdown List -->
+            <div class="card-blur p-4 rounded-2xl border border-slate-800 space-y-3">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Category Breakdown</h3>
+                <div id="analytics-category-list" class="space-y-2">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Export & Controls -->
+            <div class="card-blur p-4 rounded-2xl border border-slate-800 space-y-3">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">App Data Backup</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="exportDataToCSV()" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 rounded-xl flex items-center justify-center space-x-2">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Export CSV</span>
+                    </button>
+                    <button onclick="confirmResetData()" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-rose-400 rounded-xl flex items-center justify-center space-x-2">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>Reset Data</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 z-50 glass-header border-t border-slate-800/80 px-4 py-2">
+        <div class="max-w-md mx-auto flex items-center justify-around">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center py-1 px-3 nav-item-active transition-all">
+                <div class="icon-box p-1.5 rounded-xl transition-all">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[10px] font-bold mt-1">Dashboard</span>
+            </button>
+
+            <button onclick="switchTab('transactions')" id="nav-transactions" class="flex flex-col items-center py-1 px-3 text-slate-400 transition-all">
+                <div class="icon-box p-1.5 rounded-xl transition-all">
+                    <i data-lucide="receipt" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[10px] font-bold mt-1">History</span>
+            </button>
+
+            <button onclick="switchTab('add')" id="nav-add" class="flex flex-col items-center py-1 px-3 text-slate-400 transition-all">
+                <div class="icon-box p-1.5 rounded-xl transition-all">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[10px] font-bold mt-1">+ Entry</span>
+            </button>
+
+            <button onclick="switchTab('analytics')" id="nav-analytics" class="flex flex-col items-center py-1 px-3 text-slate-400 transition-all">
+                <div class="icon-box p-1.5 rounded-xl transition-all">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[10px] font-bold mt-1">Charts</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-teal-600 text-white text-xs font-extrabold py-2.5 px-5 rounded-full shadow-2xl transition-all opacity-0 pointer-events-none transform -translate-y-4 flex items-center space-x-2 border border-teal-400/30">
+        <i data-lucide="check" class="w-4 h-4"></i>
+        <span id="toast-message">Transaction Saved</span>
+    </div>
+
+    <script>
+        const dropdownPresets = {
+            Expense: {
+                categories: ["Food", "Transport", "Bills", "Rent", "Shopping", "Health", "Education", "Entertainment", "Loan Payment", "Family", "Savings"],
+                descriptions: ["Grocery / Supermarket", "Keells / Supermarket", "Restaurant / Dining", "Electricity Bill", "Water Bill", "Mobile / Internet", "Fuel / Petrol", "Bus / Taxi / Tuk", "Medicine / Pharmacy", "Shopping / Clothing", "House Rent", "Miscellaneous", "CUSTOM"]
+            },
+            Income: {
+                categories: ["Salary", "Business Income", "Freelance", "Bonus", "Other Income"],
+                descriptions: ["Monthly Salary", "Freelance Payment", "Business Revenue", "Annual / Festival Bonus", "Miscellaneous Credit", "CUSTOM"]
+            },
+            "Money Given": {
+                categories: ["Loan Payment", "Freelance Payment", "Personal", "Other"],
+                descriptions: ["Personal Loan Given", "Emergency loan given to Kasan", "Friend Loan", "Advance Payment", "CUSTOM"]
+            },
+            "Money Received": {
+                categories: ["Loan Payment", "Freelance Payment", "Personal", "Other"],
+                descriptions: ["Kasan repayment", "Friend Repayment", "Loan Refund Received", "Advance Refund", "CUSTOM"]
+            }
+        };
+
+        const initialSampleData = [
+            { id: 1, date: "2026-09-01", type: "Income", category: "Salary", description: "Monthly Salary", person: "Employer", payment: "Bank Transfer", amount: 100000 },
+            { id: 2, date: "2026-09-02", type: "Expense", category: "Rent", description: "House Rent", person: "Landlord", payment: "Bank Transfer", amount: 25000 },
+            { id: 3, date: "2026-09-03", type: "Expense", category: "Food", description: "Keells / Supermarket", person: "Keells / Supermarket", payment: "Debit Card", amount: 8500 },
+            { id: 4, date: "2026-09-05", type: "Money Given", category: "Personal", description: "Emergency loan given to Kasan", person: "Kasan", payment: "Bank Transfer", amount: 10000 },
+            { id: 5, date: "2026-09-07", type: "Expense", category: "Bills", description: "Electricity Bill", person: "Utility Board", payment: "Online Payment", amount: 6200 },
+            { id: 6, date: "2026-09-12", type: "Money Received", category: "Personal", description: "Kasan repayment", person: "Kasan", payment: "Cash", amount: 5000 }
+        ];
+
+        let transactions = [];
+        let doughnutChartInstance = null;
+
+        window.onload = function() {
+            lucide.createIcons();
+            document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+            updateDayNameBadge();
+
+            const storedData = localStorage.getItem('finance_cmd_pwa_data');
+            if (storedData) {
+                try {
+                    transactions = JSON.parse(storedData);
+                } catch (e) {
+                    transactions = [...initialSampleData];
+                }
+            } else {
+                transactions = [...initialSampleData];
+                saveToLocalStorage();
+            }
+
+            updateCategoryAndDescriptionDropdowns();
+            refreshAppMetricsAndUI();
+        };
+
+        function saveToLocalStorage() {
+            localStorage.setItem('finance_cmd_pwa_data', JSON.stringify(transactions));
+        }
+
+        function getDayOfWeekName(dateStr) {
+            if (!dateStr) return '';
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const dateObj = new Date(dateStr);
+            return days[dateObj.getDay()] || '';
+        }
+
+        function updateDayNameBadge() {
+            const dateVal = document.getElementById('input-date').value;
+            const dayName = getDayOfWeekName(dateVal);
+            document.getElementById('auto-day-badge').innerText = dayName || 'Day';
+        }
+
+        function updateCategoryAndDescriptionDropdowns() {
+            const selectedType = document.getElementById('input-type').value;
+            const categorySelect = document.getElementById('input-category');
+            const descriptionSelect = document.getElementById('input-description');
+
+            const presets = dropdownPresets[selectedType] || dropdownPresets.Expense;
+
+            categorySelect.innerHTML = presets.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            
+            descriptionSelect.innerHTML = presets.descriptions.map(d => {
+                if (d === 'CUSTOM') return `<option value="CUSTOM">+ Type Custom Note</option>`;
+                return `<option value="${d}">${d}</option>`;
+            }).join('');
+
+            checkCustomDescription(descriptionSelect);
+        }
+
+        function checkCustomDescription(selectEl) {
+            const customInput = document.getElementById('input-custom-description');
+            if (selectEl.value === 'CUSTOM') {
+                customInput.classList.remove('hidden');
+                customInput.required = true;
+            } else {
+                customInput.classList.add('hidden');
+                customInput.required = false;
+            }
+        }
+
+        function checkCustomPerson(selectEl) {
+            const customInput = document.getElementById('input-custom-person');
+            if (selectEl.value === 'CUSTOM') {
+                customInput.classList.remove('hidden');
+                customInput.required = true;
+            } else {
+                customInput.classList.add('hidden');
+                customInput.required = false;
+            }
+        }
+
+        function switchTab(tabId) {
+            ['dashboard', 'add', 'transactions', 'analytics'].forEach(id => {
+                const tabEl = document.getElementById(`tab-${id}`);
+                const navEl = document.getElementById(`nav-${id}`);
+
+                if (id === tabId) {
+                    tabEl.classList.remove('hidden');
+                    if (navEl) {
+                        navEl.classList.add('nav-item-active');
+                        navEl.classList.remove('text-slate-400');
+                    }
+                } else {
+                    tabEl.classList.add('hidden');
+                    if (navEl) {
+                        navEl.classList.remove('nav-item-active');
+                        navEl.classList.add('text-slate-400');
+                    }
+                }
+            });
+
+            if (tabId === 'analytics') {
+                renderAnalyticsCharts();
+            }
+        }
+
+        function calculateFinancialTotals() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            let moneyGiven = 0;
+            let moneyReceived = 0;
+
+            transactions.forEach(t => {
+                const amt = parseFloat(t.amount) || 0;
+                if (t.type === 'Income') totalIncome += amt;
+                else if (t.type === 'Expense') totalExpense += amt;
+                else if (t.type === 'Money Given') moneyGiven += amt;
+                else if (t.type === 'Money Received') moneyReceived += amt;
+            });
+
+            const netReceivable = moneyGiven - moneyReceived;
+            const rollingBalance = totalIncome - totalExpense - moneyGiven + moneyReceived;
+
+            return { totalIncome, totalExpense, netReceivable, rollingBalance };
+        }
+
+        function formatLKR(value) {
+            return new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+        }
+
+        function refreshAppMetricsAndUI() {
+            const totals = calculateFinancialTotals();
+
+            document.getElementById('kpi-balance').innerText = formatLKR(totals.rollingBalance);
+            document.getElementById('kpi-income').innerText = `LKR ${formatLKR(totals.totalIncome)}`;
+            document.getElementById('kpi-expense').innerText = `LKR ${formatLKR(totals.totalExpense)}`;
+            document.getElementById('kpi-receivable').innerText = `LKR ${formatLKR(totals.netReceivable)}`;
+
+            renderRecentTransactionsList();
+            renderTransactionsList();
+            lucide.createIcons();
+        }
+
+        function getStatusBadge(type) {
+            if (type === 'Income') return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Income</span>`;
+            if (type === 'Expense') return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-500/10 text-rose-400 border border-rose-500/20">Expense</span>`;
+            if (type === 'Money Given') return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-500/10 text-amber-400 border border-amber-500/20">Receivable</span>`;
+            return `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-500/10 text-blue-400 border border-blue-500/20">Received</span>`;
+        }
+
+        function buildTransactionCardHTML(t) {
+            const isCredit = t.type === 'Income' || t.type === 'Money Received';
+            const colorClass = isCredit ? 'text-emerald-400' : (t.type === 'Money Given' ? 'text-amber-400' : 'text-rose-400');
+            const sign = isCredit ? '+' : '-';
+
+            return `
+                <div class="p-3.5 rounded-xl card-blur flex items-center justify-between border border-slate-800/80 transition-all active:scale-[0.99]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/60 flex items-center justify-center text-xs font-black text-teal-400 shadow-inner">
+                            ${t.category.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-white line-clamp-1">${t.description}</p>
+                            <div class="flex items-center space-x-2 text-[10px] text-slate-400 mt-0.5">
+                                <span>${t.date} (${getDayOfWeekName(t.date).slice(0, 3)})</span>
+                                <span>•</span>
+                                <span class="text-slate-300 font-semibold">${t.person}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-extrabold ${colorClass}">${sign} LKR ${formatLKR(t.amount)}</p>
+                        <div class="mt-0.5">${getStatusBadge(t.type)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRecentTransactionsList() {
+            const container = document.getElementById('recent-transactions-list');
+            const sorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 4);
+
+            if (sorted.length === 0) {
+                container.innerHTML = `<div class="card-blur p-6 text-center text-xs text-slate-500 rounded-xl">No transactions recorded yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = sorted.map(t => buildTransactionCardHTML(t)).join('');
+        }
+
+        function renderTransactionsList() {
+            const container = document.getElementById('all-transactions-list');
+            const searchVal = (document.getElementById('search-input').value || '').toLowerCase();
+            const filterType = document.getElementById('filter-type').value;
+
+            let filtered = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filterType !== 'ALL') {
+                filtered = filtered.filter(t => t.type === filterType);
+            }
+
+            if (searchVal) {
+                filtered = filtered.filter(t => 
+                    t.description.toLowerCase().includes(searchVal) ||
+                    t.category.toLowerCase().includes(searchVal) ||
+                    t.person.toLowerCase().includes(searchVal)
+                );
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="card-blur p-8 text-center text-xs text-slate-400 rounded-xl">No transactions found matching criteria.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(t => `
+                <div class="relative group">
+                    ${buildTransactionCardHTML(t)}
+                    <button onclick="deleteSingleTransaction(${t.id})" class="absolute right-2 top-2 p-1.5 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-slate-900 transition-colors">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            let finalDesc = document.getElementById('input-description').value;
+            if (finalDesc === 'CUSTOM') {
+                finalDesc = document.getElementById('input-custom-description').value;
+            }
+
+            let finalPerson = document.getElementById('input-person').value;
+            if (finalPerson === 'CUSTOM') {
+                finalPerson = document.getElementById('input-custom-person').value;
+            }
+
+            const newEntry = {
+                id: Date.now(),
+                type: document.getElementById('input-type').value,
+                category: document.getElementById('input-category').value,
+                description: finalDesc || 'General Entry',
+                amount: parseFloat(document.getElementById('input-amount').value) || 0,
+                date: document.getElementById('input-date').value,
+                person: finalPerson || 'Self',
+                payment: document.getElementById('input-payment').value
+            };
+
+            transactions.unshift(newEntry);
+            saveToLocalStorage();
+            refreshAppMetricsAndUI();
+
+            document.getElementById('input-amount').value = '';
+            document.getElementById('input-custom-description').value = '';
+            document.getElementById('input-custom-person').value = '';
+            
+            showToast("Transaction Logged!");
+            switchTab('dashboard');
+        }
+
+        function deleteSingleTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveToLocalStorage();
+            refreshAppMetricsAndUI();
+            showToast("Record Deleted");
+        }
+
+        function confirmResetData() {
+            if (confirm("Reset all transactions back to default sample entries?")) {
+                transactions = [...initialSampleData];
+                saveToLocalStorage();
+                refreshAppMetricsAndUI();
+                showToast("Data Reset to Defaults");
+            }
+        }
+
+        function showToast(message) {
+            const toastEl = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = message;
+            toastEl.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+            toastEl.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toastEl.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+                toastEl.classList.remove('opacity-100', 'translate-y-0');
+            }, 2400);
+        }
+
+        function renderAnalyticsCharts() {
+            const ctx = document.getElementById('categoryDoughnutChart').getContext('2d');
+
+            const expenses = transactions.filter(t => t.type === 'Expense');
+            const categorySums = {};
+
+            expenses.forEach(e => {
+                categorySums[e.category] = (categorySums[e.category] || 0) + parseFloat(e.amount);
+            });
+
+            const labels = Object.keys(categorySums);
+            const values = Object.values(categorySums);
+
+            const listContainer = document.getElementById('analytics-category-list');
+            if (labels.length === 0) {
+                listContainer.innerHTML = `<p class="text-xs text-slate-500 py-2">No expense entries to analyze.</p>`;
+            } else {
+                const totalExpenseSum = values.reduce((a, b) => a + b, 0);
+                listContainer.innerHTML = labels.map((label, i) => {
+                    const amt = values[i];
+                    const pct = totalExpenseSum ? ((amt / totalExpenseSum) * 100).toFixed(1) : 0;
+                    return `
+                        <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-800/80 last:border-0">
+                            <span class="text-slate-300 font-medium">${label}</span>
+                            <div class="text-right">
+                                <span class="font-bold text-white">LKR ${formatLKR(amt)}</span>
+                                <span class="text-[10px] text-teal-400 ml-1">(${pct}%)</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            if (doughnutChartInstance) {
+                doughnutChartInstance.destroy();
+            }
+
+            doughnutChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.length ? labels : ['No Data'],
+                    datasets: [{
+                        data: values.length ? values : [1],
+                        backgroundColor: [
+                            '#0d9488', '#10b981', '#3b82f6', '#f59e0b', '#f43f5e', '#8b5cf6', '#64748b'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#94a3b8',
+                                font: { size: 10, family: 'Plus Jakarta Sans' },
+                                padding: 12
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function downloadSelfAppFile() {
+            const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "Personal_Finance_App.html";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("App HTML File Downloaded!");
+        }
+
+        function exportDataToCSV() {
+            if (transactions.length === 0) {
+                alert("No transactions available to export.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,ID,Date,Day,Type,Category,Description,Person,PaymentMethod,Amount\n";
+            transactions.forEach(t => {
+                const dayName = getDayOfWeekName(t.date);
+                csvContent += `"${t.id}","${t.date}","${dayName}","${t.type}","${t.category}","${t.description}","${t.person}","${t.payment}","${t.amount}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Finance_Data_Export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("CSV Export Downloaded");
+        }
+    </script>
+</body>
+</html>
